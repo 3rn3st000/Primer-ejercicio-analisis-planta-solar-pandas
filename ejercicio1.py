@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-datosGeneracion = pd.read_csv(r"Plant_1_Generation_Data.csv")
-datosMeteorologia = pd.read_csv(r"Plant_1_Weather_Sensor_Data.csv")
+datosGeneracion = pd.read_csv(r"/home/ernesto/trabajo/Datasets/datos/solar/Plant_1_Generation_Data.csv")
+datosMeteorologia = pd.read_csv(r"/home/ernesto/trabajo/Datasets/datos/solar/Plant_1_Weather_Sensor_Data.csv")
 
 
 # %% [markdown]
@@ -86,7 +86,6 @@ plt.show()
 
 # %%
 correlacionIrradiacion = datosUnidos['DC_POWER'].corr(datosUnidos['IRRADIATION'])
-sns.regplot(data=datosUnidos,x='DC_POWER',y= 'IRRADIATION',scatter_kws={'alpha':0.3},line_kws={'color':'red'})
 print (f"La correlación entre las dos variables es de {correlacionIrradiacion} lo que indica alta correlación")
 
 # %% [markdown]
@@ -119,5 +118,27 @@ sns.barplot(data=irrHora,x= 'HORA', y = 'IRRADIATION')
 indice_max_irr = irrHora['IRRADIATION'].idxmax()
 fila_maxima = irrHora.loc[indice_max_irr]
 print(f"La irradiación máxima promedio es de  {fila_maxima['IRRADIATION']} y se da a las {fila_maxima['HORA']}")
+
+# %% [markdown]
+# Desde la empresa nos comunican que ha bajado la potencia mucho en los últimos meses, seguramente provocado por el deterioro o fallo de alguno de los inversores, nos piden localizar los inversores defectuosos para poder repararlos.
+# 
+# Usaremos un ratio de rendimiento calculado sobre la radiación solar para identificar los outliers a la baja que son los que están causando este fallo
+
+# %%
+# Creamos el resumen por inversor
+irrDCComb = datosUnidos.groupby('SOURCE_KEY_y').agg({
+    'DC_POWER': 'mean',
+    'IRRADIATION': 'mean'
+}).reset_index()
+
+irrDCComb['RATIOPROD'] = irrDCComb['DC_POWER'] / irrDCComb['IRRADIATION']
+mediana = abs(irrDCComb['RATIOPROD'].median())
+Q1 = irrDCComb['RATIOPROD'].quantile(0.25)
+Q3 = irrDCComb['RATIOPROD'].quantile(0.75)
+IQR = Q3 - Q1
+limite_inferior = Q1 - 1.5 * IQR
+inversores_fallando = irrDCComb[irrDCComb['RATIOPROD'] < limite_inferior]
+print(f"Inversores defectuosos \n {inversores_fallando}")
+print(f"La mediana de ratio es de {mediana}")
 
 
