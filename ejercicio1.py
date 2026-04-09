@@ -157,9 +157,9 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 
 datosUnidos_ml = datosUnidos.dropna(subset=['AMBIENT_TEMPERATURE', 'IRRADIATION', 'DC_POWER'])  
-
-X = datosUnidos_ml[['AMBIENT_TEMPERATURE','IRRADIATION']]
-y = datosUnidos_ml['DC_POWER']
+datos_entrenamiento = datosUnidos_ml[~datosUnidos_ml['SOURCE_KEY_y'].isin(ids_defectuosos)]
+X = datos_entrenamiento[['AMBIENT_TEMPERATURE','IRRADIATION']]
+y = datos_entrenamiento['DC_POWER']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 modelo_inversor = RandomForestRegressor(n_estimators=100, random_state=42)
 modelo_inversor.fit(X_train, y_train)
@@ -179,7 +179,23 @@ datos_test = datosUnidos.loc[
     ['SOURCE_KEY_y', 'AMBIENT_TEMPERATURE', 'IRRADIATION']
 ].dropna()
 
-# 2. Predicción
+# 2. Predicciónfrom sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
+
+datosUnidos_ml = datosUnidos.dropna(subset=['AMBIENT_TEMPERATURE', 'IRRADIATION', 'DC_POWER'])  
+datos_entrenamiento = datosUnidos_ml[~datosUnidos_ml['SOURCE_KEY_y'].isin(ids_defectuosos)]
+X = datos_entrenamiento[['AMBIENT_TEMPERATURE','IRRADIATION']]
+y = datos_entrenamiento['DC_POWER']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+modelo_inversor = RandomForestRegressor(n_estimators=100, random_state=42)
+modelo_inversor.fit(X_train, y_train)
+predicciones = modelo_inversor.predict(X_test)
+error = mean_absolute_error(y_test, predicciones)
+print(f"El error medio de mi Gemelo Digital es de: {error:.2f} kW")
+
+
+
 Kw_restauracion = modelo_inversor.predict(
     datos_test[['AMBIENT_TEMPERATURE', 'IRRADIATION']]
 )
@@ -212,149 +228,5 @@ plt.figure(figsize=(10, 6))
 sns.barplot(x='Estado', y='Potencia (kW)', data=datos_grafico, palette=['red', 'gray', 'green'])
 plt.title('¿Cuánto estamos perdiendo por no reparar?')
 plt.show()
-
-
-# %%
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-datosGeneracion = pd.read_csv(r"/home/ernesto/trabajo/Datasets/datos/solar/Plant_1_Generation_Data.csv")
-datosMeteorologia = pd.read_csv(r"/home/ernesto/trabajo/Datasets/datos/solar/Plant_1_Weather_Sensor_Data.csv")
-
-
-# %% [markdown]
-# Una vez cargadas, visualizamos la info de los dos csv para poder juntarlos
-
-# %%
-print(datosGeneracion.info())
-print(datosMeteorologia.info())
-
-# %% [markdown]
-# En primer lugar transformamos todas las fechas a formato DATE_TIME
-
-# %%
-datosGeneracion['DATE_TIME'] = pd.to_datetime(datosGeneracion['DATE_TIME'])
-datosMeteorologia['DATE_TIME'] = pd.to_datetime(datosMeteorologia['DATE_TIME'])
-
-# %% [markdown]
-# Luego cruzamos las tablas
-
-# %%
-datosUnidos= pd.merge(datosMeteorologia,datosGeneracion,on='DATE_TIME',how = 'inner')
-print(datosUnidos.shape)
-print(datosMeteorologia.shape)
-
-# %% [markdown]
-# Eliminamos una de las columnas de id de las plantas al estar duplicadas
-
-# %%
-datosUnidos = datosUnidos.drop(columns=['PLANT_ID_x'])
-
-
-# %% [markdown]
-# En primer lugar hacemos una funcion para detectar outliers
-
-# %%
-def fueraRango(valor, min_val, max_val):
-    if valor < min_val or valor > max_val:
-        return np.nan
-    return valor
-        
-datosUnidos['DC_POWER'] = datosUnidos['DC_POWER'].apply(
-    fueraRango, 
-    min_val=1, 
-    max_val=15000
-)
-
-# %% [markdown]
-# Contamos cuantas mediciones se han hecho por hora
-
-# %%
-datosUnidos['TRAMO_HORARIO'] = datosUnidos['DATE_TIME'].dt.floor('h')
-ranking_tramos = datosUnidos['TRAMO_HORARIO'].value_counts().reset_index(name='frecuencia')
-print(ranking_tramos)
-
-# %% [markdown]
-# Buscamos las que más y menos generan
-
-# %%
-
-dU_promedio = datosUnidos.groupby('SOURCE_KEY_y')['DC_POWER'].mean().sort_values(ascending=False).reset_index()
-sns.set_theme(style="whitegrid") 
-plt.figure(figsize=(12, 6))
-plot = sns.barplot(
-    data=dU_promedio, 
-    x='SOURCE_KEY_y', 
-    y='DC_POWER', 
-)
-plt.title('Promedio de DC POWER por Fuente (Inversor)', fontsize=16, fontweight='bold', pad=20)
-plt.xlabel('Source Key (Inversor)', fontsize=12)
-plt.ylabel('Promedio DC Power (kW)', fontsize=12)
-plt.xticks(rotation=45, ha='right')
-sns.despine(left=True, bottom=True)
-
-plt.tight_layout() 
-plt.show()
-
-# %% [markdown]
-# Ahora vamos a ver la relación entre la producción y la irradiación solar
-
-# %%
-correlacionIrradiacion = datosUnidos['DC_POWER'].corr(datosUnidos['IRRADIATION'])
-print (f"La correlación entre las dos variables es de {correlacionIrradiacion} lo que indica alta correlación")
-
-# %% [markdown]
-# ¿Qué es más importante para la generación, la temperatura del modulo, la ambiente o la irradiación?
-
-# %%
-correlacionTempAmb = datosUnidos['DC_POWER'].corr(datosUnidos['AMBIENT_TEMPERATURE'])
-corrrelacionTempMod = datosUnidos['DC_POWER'].corr(datosUnidos['MODULE_TEMPERATURE'])
-
-lista_corr = [
-    ("Irradiación", correlacionIrradiacion),
-    ("Temp. Ambiente", correlacionTempAmb),
-    ("Temp. Módulo", corrrelacionTempMod)
-]
-
-lista_corr.sort(key=lambda x: x[1], reverse=True)
-
-for nombre, valor in lista_corr:
-    print(f"{nombre} : {valor:.4f}")
-df_LCorr = pd.DataFrame(lista_corr,columns=['VARIABLE','COEFICIENTE'])
-sns.barplot(data=df_LCorr,x='COEFICIENTE',y='VARIABLE')
-
-# %% [markdown]
-# Sabiendo ya la importancia de la irradiación, buscaremos las horas donde teóricamente obtendremos más generación
-
-# %%
-datosUnidos['HORA']= datosUnidos.DATE_TIME.dt.hour
-irrHora = datosUnidos.groupby('HORA')['IRRADIATION'].median().reset_index()
-sns.barplot(data=irrHora,x= 'HORA', y = 'IRRADIATION')
-indice_max_irr = irrHora['IRRADIATION'].idxmax()
-fila_maxima = irrHora.loc[indice_max_irr]
-print(f"La irradiación máxima promedio es de  {fila_maxima['IRRADIATION']} y se da a las {fila_maxima['HORA']}")
-
-# %% [markdown]
-# Desde la empresa nos comunican que ha bajado la potencia mucho en los últimos meses, seguramente provocado por el deterioro o fallo de alguno de los inversores, nos piden localizar los inversores defectuosos para poder repararlos.
-# 
-# Usaremos un ratio de rendimiento calculado sobre la radiación solar para identificar los outliers a la baja que son los que están causando este fallo
-
-# %%
-# Creamos el resumen por inversor
-irrDCComb = datosUnidos.groupby('SOURCE_KEY_y').agg({
-    'DC_POWER': 'mean',
-    'IRRADIATION': 'mean'
-}).reset_index()
-
-irrDCComb['RATIOPROD'] = irrDCComb['DC_POWER'] / irrDCComb['IRRADIATION']
-mediana = abs(irrDCComb['RATIOPROD'].median())
-Q1 = irrDCComb['RATIOPROD'].quantile(0.25)
-Q3 = irrDCComb['RATIOPROD'].quantile(0.75)
-IQR = Q3 - Q1
-limite_inferior = Q1 - 1.5 * IQR
-inversores_fallando = irrDCComb[irrDCComb['RATIOPROD'] < limite_inferior]
-print(f"Inversores defectuosos \n {inversores_fallando}")
-print(f"La mediana de ratio es de {mediana}")
 
 
