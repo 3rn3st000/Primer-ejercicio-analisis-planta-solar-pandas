@@ -1,10 +1,10 @@
 # Análisis de Planta Solar Fotovoltaica
 
-Proyecto de análisis de datos sobre una planta solar real. El objetivo principal era detectar qué inversores estaban funcionando por debajo de su rendimiento esperado y estimar cuánta energía se está perdiendo por no repararlos.
+Escenario de análisis  de datos sobre una planta solar real. El objetivo principal era detectar qué inversores estaban funcionando por debajo de su rendimiento esperado y estimar cuánta energía se está perdiendo por no repararlos.
 
 ## El problema
 
-La empresa notó una bajada en la generación total de la planta durante los últimos meses. Sospechaban que uno o varios inversores estaban fallando, pero no sabían cuáles ni cuánto impacto real tenían en la producción.
+En este escenario hipotético la empresa notó una bajada en la generación total de la planta durante los últimos meses. Sospechaban que uno o varios inversores estaban fallando, pero no sabían cuáles ni cuánto impacto real tenían en la producción.
 
 ## Qué hace el notebook
 
@@ -12,7 +12,7 @@ El análisis sigue una lógica bastante lineal:
 
 1. Se cargan y cruzan los datos de generación con los datos meteorológicos del sensor
 2. Se limpian outliers en DC_POWER y se interpolan los huecos temporalmente
-3. Se analiza qué variables climáticas correlacionan más con la producción (spoiler: la irradiación gana por mucho)
+3. Se analiza qué variables climáticas correlacionan más con la producción 
 4. Se calcula un ratio de rendimiento por inversor (potencia media / irradiación media) y se usan cuartiles para detectar los que están claramente por debajo
 5. Se entrena un Random Forest con los inversores sanos para construir un "gemelo digital": dado un contexto meteorológico, ¿cuánto debería generar un inversor en buen estado?
 6. Ese modelo se aplica sobre los inversores defectuosos para estimar su potencial real si se reparan
@@ -23,7 +23,6 @@ El análisis sigue una lógica bastante lineal:
 Los datos son públicos y están disponibles en Kaggle:
 [Solar Power Generation Data](https://www.kaggle.com/datasets/anikannal/solar-power-generation-data)
 
-Descarga los archivos `Plant_1_Generation_Data.csv` y `Plant_1_Weather_Sensor_Data.csv` y colócalos en la misma carpeta que el notebook.
 
 ## Requisitos
 
@@ -35,11 +34,6 @@ matplotlib
 scikit-learn
 ```
 
-Puedes instalarlos todos con:
-
-```bash
-pip install pandas numpy seaborn matplotlib scikit-learn
-```
 
 ## Resultado
 
