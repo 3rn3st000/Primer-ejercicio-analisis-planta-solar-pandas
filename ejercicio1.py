@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-datosGeneracion = pd.read_csv(r"/home/ernesto/trabajo/Datasets/datos/solar/Plant_1_Generation_Data.csv")
-datosMeteorologia = pd.read_csv(r"/home/ernesto/trabajo/Datasets/datos/solar/Plant_1_Weather_Sensor_Data.csv")
+datosGeneracion = pd.read_csv(r"Plant_1_Generation_Data.csv")
+datosMeteorologia = pd.read_csv(r"Plant_1_Weather_Sensor_Data.csv")
 
 
 # %% [markdown]
