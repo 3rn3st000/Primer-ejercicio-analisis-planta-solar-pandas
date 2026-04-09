@@ -6,12 +6,15 @@ Este proyecto es mi primer análisis de datos utilizando la librería **Pandas**
 - Limpieza de datos (outliers y valores nulos).
 - Unión de datasets (*merging*) mediante marcas de tiempo.
 - Cálculo de correlaciones matemáticas.
+- Visualización de datos
 
 ##  Principales hallazgos
-- La **Irradiación** es el factor más crítico para la generación (Correlación: 0.94).
+- La **Irradiación** es el factor más crítico para la generación (Correlación: 0.98).
 - La temperatura del módulo afecta más a la producción que la temperatura ambiente.
 
 ## Tecnologías utilizadas
 - Python
 - Pandas
 - Numpy
+- Matplotlib
+- Seaborn
