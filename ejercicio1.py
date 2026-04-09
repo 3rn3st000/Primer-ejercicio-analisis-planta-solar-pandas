@@ -145,6 +145,7 @@ Q3 = irrDCComb['RATIOPROD'].quantile(0.75)
 IQR = Q3 - Q1
 limite_inferior = Q1 - 1.5 * IQR
 inversores_fallando = irrDCComb[irrDCComb['RATIOPROD'] < limite_inferior]
+ids_defectuosos = inversores_fallando['SOURCE_KEY_y'].tolist()
 print(f"Inversores defectuosos \n {inversores_fallando}")
 print(f"La mediana de ratio es de {mediana}")
 
@@ -178,24 +179,6 @@ datos_test = datosUnidos.loc[
     datosUnidos['SOURCE_KEY_y'].isin(ids_defectuosos), 
     ['SOURCE_KEY_y', 'AMBIENT_TEMPERATURE', 'IRRADIATION']
 ].dropna()
-
-# 2. Predicciónfrom sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
-
-datosUnidos_ml = datosUnidos.dropna(subset=['AMBIENT_TEMPERATURE', 'IRRADIATION', 'DC_POWER'])  
-datos_entrenamiento = datosUnidos_ml[~datosUnidos_ml['SOURCE_KEY_y'].isin(ids_defectuosos)]
-X = datos_entrenamiento[['AMBIENT_TEMPERATURE','IRRADIATION']]
-y = datos_entrenamiento['DC_POWER']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
-modelo_inversor = RandomForestRegressor(n_estimators=100, random_state=42)
-modelo_inversor.fit(X_train, y_train)
-predicciones = modelo_inversor.predict(X_test)
-error = mean_absolute_error(y_test, predicciones)
-print(f"El error medio de mi Gemelo Digital es de: {error:.2f} kW")
-
-
-
 Kw_restauracion = modelo_inversor.predict(
     datos_test[['AMBIENT_TEMPERATURE', 'IRRADIATION']]
 )
@@ -215,7 +198,7 @@ print(datosUnidos['DC_POWER'].mean())
 # 1. Calculamos las tres medias principales
 media_plant_sana = datosUnidos.loc[~datosUnidos['SOURCE_KEY_y'].isin(ids_defectuosos), 'DC_POWER'].mean()
 media_actual_defectuosos = datosUnidos.loc[datosUnidos['SOURCE_KEY_y'].isin(ids_defectuosos), 'DC_POWER'].mean()
-media_potencial_defectuosos = resumen_final['DC_POWER_TEORICO'].mean()
+media_potencial_defectuosos = datos_test['DC_POWER_TEORICO'].mean()
 
 # 2. Creamos una tablita rápida para graficar
 datos_grafico = {
