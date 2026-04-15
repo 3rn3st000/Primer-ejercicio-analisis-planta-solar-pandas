@@ -16,7 +16,7 @@ El análisis sigue una lógica bastante lineal:
 4. Se calcula un ratio de rendimiento por inversor (potencia media / irradiación media) y se usan cuartiles para detectar los que están claramente por debajo
 5. Se entrena un Random Forest con los inversores sanos para construir un "gemelo digital": dado un contexto meteorológico, ¿cuánto debería generar un inversor en buen estado?
 6. Ese modelo se aplica sobre los inversores defectuosos para estimar su potencial real si se reparan
-7. El resultado final se presenta en un gráfico comparativo pensado para que cualquier stakeholder entienda el impacto económico de la reparación
+7. El resultado final se presenta en un gráfico comparativo y un calculo monetario pensado para que cualquier stakeholder entienda el impacto económico de la reparación
 
 ## Datos
 
@@ -37,7 +37,7 @@ scikit-learn
 
 ## Resultado
 
-El análisis identificó inversores con un ratio de rendimiento significativamente inferior al resto de la planta. El gemelo digital estimó que repararlos recuperaría una media de X kW por inversor, lo que justifica económicamente la intervención.
+El análisis identificó 2 inversores con un ratio de rendimiento significativamente inferior al resto de la planta. El gemelo digital estimó que repararlos recuperaría una media de 12179 € al año.
 
 ## Estructura del proyecto
 
@@ -48,8 +48,3 @@ El análisis identificó inversores con un ratio de rendimiento significativamen
 └── Plant_1_Weather_Sensor_Data.csv
 ```
 
-## Notas técnicas
-
-- Los puntos donde hay irradiación > 0 pero potencia = 0 se han conservado intencionalmente. Son anomalías operativas que ayudan a detectar fallos y eliminarlos distorsionaría el análisis.
-- La interpolación temporal de outliers en DC_POWER se hace por grupo de inversor para no mezclar series de fuentes distintas.
-- El modelo se entrena exclusivamente con inversores sanos para que las predicciones representen un rendimiento "normal" y no uno ya degradado.
